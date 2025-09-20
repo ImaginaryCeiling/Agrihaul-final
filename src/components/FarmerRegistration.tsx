@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { InteractiveMap } from './InteractiveMap';
+import { LeafletMap } from './LeafletMap';
 import { ArrowLeft, Tractor, Loader2 } from 'lucide-react';
 import { authService, ApiError } from '../services/api';
 import { FarmerProfile } from '../../shared/types';
@@ -22,6 +23,7 @@ interface Location {
 }
 
 export function FarmerRegistration({ onComplete, onBack }: FarmerRegistrationProps) {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     farmName: '',
     ownerName: '',
@@ -55,15 +57,8 @@ export function FarmerRegistration({ onComplete, onBack }: FarmerRegistrationPro
       return;
     }
 
-    if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters long.');
-      return;
-    }
-
-    // Check password complexity
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
-    if (!passwordRegex.test(formData.password)) {
-      setError('Password must contain at least one lowercase letter, one uppercase letter, and one number.');
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters long.');
       return;
     }
 
@@ -81,7 +76,7 @@ export function FarmerRegistration({ onComplete, onBack }: FarmerRegistrationPro
         totalJobs: 0
       };
 
-      // Register user with API
+      // Register user
       const result = await authService.register({
         email: formData.email,
         password: formData.password,
@@ -90,7 +85,7 @@ export function FarmerRegistration({ onComplete, onBack }: FarmerRegistrationPro
       });
 
       console.log('Farmer registered successfully:', result);
-      onComplete();
+      navigate('/dashboard');
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);
@@ -131,7 +126,7 @@ export function FarmerRegistration({ onComplete, onBack }: FarmerRegistrationPro
 
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Farm Location Map */}
-          <InteractiveMap
+          <LeafletMap
             title="Farm Location"
             description="Click on the map to select your farm's precise location. This helps carriers find you and plan optimal routes."
             onLocationSelect={handleLocationSelect}

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -6,7 +7,7 @@ import { Textarea } from './ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Checkbox } from './ui/checkbox';
-import { InteractiveMap } from './InteractiveMap';
+import { LeafletMap } from './LeafletMap';
 import { ArrowLeft, Truck, Loader2 } from 'lucide-react';
 import { authService, ApiError } from '../services/api';
 import { CarrierProfile } from '../../shared/types';
@@ -23,6 +24,7 @@ interface Location {
 }
 
 export function CarrierRegistration({ onComplete, onBack }: CarrierRegistrationProps) {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     companyName: '',
     ownerName: '',
@@ -61,15 +63,8 @@ export function CarrierRegistration({ onComplete, onBack }: CarrierRegistrationP
       return;
     }
 
-    if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters long.');
-      return;
-    }
-
-    // Check password complexity
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
-    if (!passwordRegex.test(formData.password)) {
-      setError('Password must contain at least one lowercase letter, one uppercase letter, and one number.');
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters long.');
       return;
     }
 
@@ -93,7 +88,7 @@ export function CarrierRegistration({ onComplete, onBack }: CarrierRegistrationP
         equipmentTypes: formData.truckTypes
       };
 
-      // Register user with API
+      // Register user
       const result = await authService.register({
         email: formData.email,
         password: formData.password,
@@ -102,7 +97,7 @@ export function CarrierRegistration({ onComplete, onBack }: CarrierRegistrationP
       });
 
       console.log('Carrier registered successfully:', result);
-      onComplete();
+      navigate('/dashboard');
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);
@@ -171,7 +166,7 @@ export function CarrierRegistration({ onComplete, onBack }: CarrierRegistrationP
 
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Service Area Map */}
-          <InteractiveMap
+          <LeafletMap
             title="Operating Location & Service Area"
             description="Select your primary operating location and set your service radius. This determines which jobs you'll see and helps farmers find carriers in their area."
             onLocationSelect={handleLocationSelect}
@@ -280,17 +275,17 @@ export function CarrierRegistration({ onComplete, onBack }: CarrierRegistrationP
                 {/* Licensing & Insurance */}
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="licenseNumber">DOT License Number</Label>
+                    <Label htmlFor="licenseNumber"> License Number</Label>
                     <Input
                       id="licenseNumber"
                       value={formData.licenseNumber}
                       onChange={(e) => handleInputChange('licenseNumber', e.target.value)}
-                      placeholder="DOT-123456"
+                      placeholder="123456"
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="insuranceNumber">Insurance Policy Number</Label>
+                    <Label htmlFor="insuranceNumber">Insurance Policy Number</Label> 
                     <Input
                       id="insuranceNumber"
                       value={formData.insuranceNumber}

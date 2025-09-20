@@ -1,15 +1,10 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from './ui/button';
 import { Truck, Tractor, MapPin, Clock, Shield, DollarSign, Users, BarChart3, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 
-interface LandingPageProps {
-  onRegisterFarmer: () => void;
-  onRegisterCarrier: () => void;
-  onLogin: () => void;
-}
-
-export function LandingPage({ onRegisterFarmer, onRegisterCarrier, onLogin }: LandingPageProps) {
+export function LandingPage() {
   const [activeDialog, setActiveDialog] = useState<'about' | 'services' | null>(null);
 
   const handleNavClick = (section: 'about' | 'services' | 'contact') => {
@@ -62,24 +57,24 @@ export function LandingPage({ onRegisterFarmer, onRegisterCarrier, onLogin }: La
               >
                 Contact
               </button>
-              <Button 
-                variant="outline" 
-                onClick={onLogin}
+              <Button
+                variant="outline"
+                asChild
                 className="border-green-500 text-green-500 hover:bg-green-500 hover:text-white"
                 size="sm"
               >
-                Login
+                <Link to="/login">Login</Link>
               </Button>
             </div>
             {/* Mobile menu button */}
             <div className="md:hidden">
-              <Button 
-                variant="outline" 
-                onClick={onLogin}
+              <Button
+                variant="outline"
+                asChild
                 className="border-green-500 text-green-500 hover:bg-green-500 hover:text-white"
                 size="sm"
               >
-                Login
+                <Link to="/login">Login</Link>
               </Button>
             </div>
           </nav>
@@ -99,21 +94,25 @@ export function LandingPage({ onRegisterFarmer, onRegisterCarrier, onLogin }: La
               
               {/* Registration Buttons */}
               <div className="flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-6 px-4">
-                <Button 
-                  onClick={onRegisterFarmer}
+                <Button
+                  asChild
                   className="w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-white py-4 sm:py-5 px-8 sm:px-10 text-lg sm:text-xl transform hover:-translate-y-1 transition-all duration-300 min-w-[240px]"
                   size="lg"
                 >
-                  <Tractor className="mr-3 h-5 w-5 sm:h-6 sm:w-6" />
-                  Register as Farmer
+                  <Link to="/register" className="flex items-center">
+                    <Tractor className="mr-3 h-5 w-5 sm:h-6 sm:w-6" />
+                    Register as Farmer
+                  </Link>
                 </Button>
-                <Button 
-                  onClick={onRegisterCarrier}
+                <Button
+                  asChild
                   className="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white py-4 sm:py-5 px-8 sm:px-10 text-lg sm:text-xl transform hover:-translate-y-1 transition-all duration-300 min-w-[240px]"
                   size="lg"
                 >
-                  <Truck className="mr-3 h-5 w-5 sm:h-6 sm:w-6" />
-                  Register as Carrier
+                  <Link to="/register" className="flex items-center">
+                    <Truck className="mr-3 h-5 w-5 sm:h-6 sm:w-6" />
+                    Register as Carrier
+                  </Link>
                 </Button>
               </div>
             </div>

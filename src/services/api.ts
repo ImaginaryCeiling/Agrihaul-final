@@ -23,12 +23,6 @@ async function apiRequest<T>(
     'Content-Type': 'application/json',
   };
 
-  // Add auth token if available
-  const token = localStorage.getItem('authToken');
-  if (token) {
-    defaultHeaders['Authorization'] = `Bearer ${token}`;
-  }
-
   const config: RequestInit = {
     ...options,
     headers: {
@@ -63,46 +57,48 @@ async function apiRequest<T>(
 }
 
 export const authService = {
-  async register(userData: RegisterRequest): Promise<{ user: Partial<User>; token: string }> {
-    const response = await apiRequest<{ user: Partial<User>; token: string }>(
-      '/api/auth/register',
-      {
-        method: 'POST',
-        body: JSON.stringify(userData),
-      }
-    );
+  async register(userData: RegisterRequest): Promise<{ user: Partial<User> }> {
+    // Simulate API call for demo - just store user data locally
+    const mockUser: Partial<User> = {
+      id: Date.now().toString(),
+      email: userData.email,
+      userType: userData.userType,
+      profile: userData.profile
+    };
 
-    if (response.success && response.data) {
-      // Store token in localStorage
-      localStorage.setItem('authToken', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-      return response.data;
-    }
+    // Store user in localStorage
+    localStorage.setItem('isAuthenticated', 'true');
+    localStorage.setItem('user', JSON.stringify(mockUser));
 
-    throw new ApiError(response.error || 'Registration failed');
+    return { user: mockUser };
   },
 
-  async login(credentials: LoginRequest): Promise<{ user: Partial<User>; token: string }> {
-    const response = await apiRequest<{ user: Partial<User>; token: string }>(
-      '/api/auth/login',
-      {
-        method: 'POST',
-        body: JSON.stringify(credentials),
+  async login(credentials: LoginRequest): Promise<{ user: Partial<User> }> {
+    // Simulate API call for demo - accept any credentials
+    const mockUser: Partial<User> = {
+      id: Date.now().toString(),
+      email: credentials.email,
+      userType: 'farmer', // Default for demo
+      profile: {
+        farmName: 'Demo Farm',
+        farmSize: 100,
+        farmLocation: 'Demo Location',
+        primaryCrops: ['corn'],
+        contactPhone: '555-0123',
+        rating: 0,
+        totalJobs: 0
       }
-    );
+    };
 
-    if (response.success && response.data) {
-      // Store token in localStorage
-      localStorage.setItem('authToken', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-      return response.data;
-    }
+    // Store user in localStorage
+    localStorage.setItem('isAuthenticated', 'true');
+    localStorage.setItem('user', JSON.stringify(mockUser));
 
-    throw new ApiError(response.error || 'Login failed');
+    return { user: mockUser };
   },
 
   logout(): void {
-    localStorage.removeItem('authToken');
+    localStorage.removeItem('isAuthenticated');
     localStorage.removeItem('user');
   },
 
@@ -111,12 +107,8 @@ export const authService = {
     return userStr ? JSON.parse(userStr) : null;
   },
 
-  getToken(): string | null {
-    return localStorage.getItem('authToken');
-  },
-
   isAuthenticated(): boolean {
-    return !!this.getToken();
+    return localStorage.getItem('isAuthenticated') === 'true';
   }
 };
 
