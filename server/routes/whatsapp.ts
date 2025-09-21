@@ -70,7 +70,7 @@ router.post('/webhook', async (req: Request, res: Response) => {
       console.warn('[WhatsApp] PUBLIC_BASE_URL not set; signature validation may fail.');
     }
 
-    const isValid = twilioClient.validateRequest(TWILIO_AUTH_TOKEN, signature, requestUrl, params);
+    const isValid = twilio.validateRequest(TWILIO_AUTH_TOKEN, signature, requestUrl, params);
     if (!isValid) {
       return res.status(403).send('Invalid signature');
     }
