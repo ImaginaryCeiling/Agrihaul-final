@@ -1,4 +1,4 @@
-import { ApiResponse, RegisterRequest, LoginRequest, User, AuthTokens } from '../../shared/types';
+import { ApiResponse, RegisterRequest, LoginRequest, User, AuthTokens, RatingRequest, Rating, RatingSummary } from '../../shared/types';
 
 const API_BASE_URL = '';
 
@@ -157,6 +157,40 @@ export const bidService = {
     return await apiRequest('/api/bids', {
       method: 'POST',
       body: JSON.stringify(bidData),
+    });
+  }
+};
+
+export const ratingService = {
+  async submitRating(ratingData: RatingRequest) {
+    return await apiRequest('/api/ratings', {
+      method: 'POST',
+      body: JSON.stringify(ratingData),
+    });
+  },
+
+  async getUserRatings(userId: string) {
+    return await apiRequest<Rating[]>(`/api/ratings/user/${userId}`);
+  },
+
+  async getJobRatings(jobId: string) {
+    return await apiRequest<Rating[]>(`/api/ratings/job/${jobId}`);
+  },
+
+  async getRatingSummary(userId: string) {
+    return await apiRequest<RatingSummary>(`/api/ratings/summary/${userId}`);
+  },
+
+  async updateRating(ratingId: string, updates: Partial<RatingRequest>) {
+    return await apiRequest(`/api/ratings/${ratingId}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+  },
+
+  async deleteRating(ratingId: string) {
+    return await apiRequest(`/api/ratings/${ratingId}`, {
+      method: 'DELETE',
     });
   }
 };

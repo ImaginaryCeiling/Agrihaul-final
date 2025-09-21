@@ -85,3 +85,46 @@ export interface RegisterRequest {
   userType: 'farmer' | 'carrier';
   profile: FarmerProfile | CarrierProfile;
 }
+
+export interface Rating {
+  id: string;
+  jobId: string;
+  raterId: string; // Who gave the rating
+  ratedUserId: string; // Who received the rating
+  rating: number; // 1-5 stars
+  comment?: string;
+  categories: RatingCategory[];
+  createdAt: Date;
+}
+
+export interface RatingCategory {
+  category: 'communication' | 'punctuality' | 'quality' | 'professionalism' | 'reliability';
+  score: number; // 1-5 stars
+}
+
+export interface RatingSummary {
+  averageRating: number;
+  totalRatings: number;
+  categoryAverages: {
+    communication: number;
+    punctuality: number;
+    quality: number;
+    professionalism: number;
+    reliability: number;
+  };
+  ratingDistribution: {
+    1: number;
+    2: number;
+    3: number;
+    4: number;
+    5: number;
+  };
+}
+
+export interface RatingRequest {
+  jobId: string;
+  ratedUserId: string;
+  rating: number;
+  comment?: string;
+  categories: RatingCategory[];
+}
