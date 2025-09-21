@@ -138,6 +138,17 @@ export const jobService = {
       method: 'POST',
       body: JSON.stringify(jobData),
     });
+  },
+
+  async updateJobStatus(jobId: string, status: string, carrierId?: string) {
+    return await apiRequest(`/api/jobs/${jobId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status, carrierId }),
+    });
+  },
+
+  async getJobById(jobId: string) {
+    return await apiRequest(`/api/jobs/${jobId}`);
   }
 };
 

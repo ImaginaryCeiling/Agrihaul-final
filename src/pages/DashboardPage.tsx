@@ -8,6 +8,7 @@ import { Label } from '../components/ui/label';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Switch } from '../components/ui/switch';
 import { CarrierMap } from '../components/CarrierMap';
 import { RatingDisplay, QuickRating } from '../components/RatingDisplay';
 import { RatingInput } from '../components/RatingInput';
@@ -29,7 +30,7 @@ import {
   Save,
   Star
 } from 'lucide-react';
-import { authService, ratingService, bidService, activeJobService } from '../services/api';
+import { authService, ratingService, bidService, activeJobService, jobService } from '../services/api';
 
 interface User {
   id: string;
@@ -46,6 +47,13 @@ export function DashboardPage() {
   const [showRatingDialog, setShowRatingDialog] = useState(false);
   const [ratingTarget, setRatingTarget] = useState<{jobId: string, userId: string, userName: string, userType: 'farmer' | 'carrier'} | null>(null);
   const [activeJobs, setActiveJobs] = useState([]);
+  const [dashboardStats, setDashboardStats] = useState({
+    activeJobs: 0,
+    completedJobs: 15,
+    totalSpent: 8750,
+    avgRating: 4.8,
+    trustScore: 92
+  });
   const [jobForm, setJobForm] = useState({
     title: '',
     cropType: '',
@@ -58,11 +66,13 @@ export function DashboardPage() {
     budget: '',
     equipmentRequired: [],
     specialInstructions: '',
-    description: ''
+    description: '',
+    enableCrowdsourcing: false
   });
-  const [mockBids] = useState([
+  const [mockBids, setMockBids] = useState([
     {
       id: '1',
+      jobId: 'job-1',
       carrierId: 'carrier1',
       carrierName: 'Express Logistics',
       bidAmount: 450,
@@ -74,6 +84,7 @@ export function DashboardPage() {
     },
     {
       id: '2',
+      jobId: 'job-1',
       carrierId: 'carrier2',
       carrierName: 'Farm Transport Co',
       bidAmount: 420,
@@ -176,7 +187,8 @@ export function DashboardPage() {
       budget: '',
       equipmentRequired: [],
       specialInstructions: '',
-      description: ''
+      description: '',
+      enableCrowdsourcing: false
     });
     setActiveTab('jobs');
   };
@@ -209,18 +221,34 @@ export function DashboardPage() {
 
   const handleAcceptBid = async (bidId: string, bid: any) => {
     try {
+      // Check if job has already been accepted (safeguard)
+      const jobResponse = await jobService.getJobById(bid.jobId);
+      if (jobResponse.data?.status === 'assigned' || jobResponse.data?.carrierId) {
+        alert('This job has already been assigned to another carrier.');
+        return;
+      }
+
+      // Accept the bid
       await bidService.acceptBid(bidId);
 
-      // Create active job record (in a real app, this would be handled by the backend)
-      console.log('Bid accepted:', bidId);
-      console.log('Creating active job for bid:', bid);
+      // Update job status to 'assigned' and set carrier
+      await jobService.updateJobStatus(bid.jobId, 'assigned', bid.carrierId);
 
-      // Update local state - remove bid from mockBids and add to active jobs
-      // In a real app, you'd refetch data from the server
+      // Remove accepted bid from local state and disable other bids for same job
+      setMockBids(prevBids =>
+        prevBids.map(b =>
+          b.jobId === bid.jobId
+            ? { ...b, status: b.id === bidId ? 'accepted' : 'rejected' }
+            : b
+        )
+      );
+
+      // Refresh active jobs to show the new one
+      await loadActiveJobs();
+
+      console.log('Bid accepted successfully:', { bidId, jobId: bid.jobId, carrierId: bid.carrierId });
       alert('Bid accepted successfully! Job moved to active jobs.');
 
-      // Optionally refresh active jobs
-      loadActiveJobs();
     } catch (error) {
       console.error('Failed to accept bid:', error);
       alert('Failed to accept bid. Please try again.');
@@ -231,7 +259,14 @@ export function DashboardPage() {
     try {
       if (user) {
         const response = await activeJobService.getActiveJobs(user.id);
-        setActiveJobs(response.data || []);
+        const activeJobsData = response.data || [];
+        setActiveJobs(activeJobsData);
+
+        // Update dashboard stats with current active jobs count
+        setDashboardStats(prev => ({
+          ...prev,
+          activeJobs: activeJobsData.length
+        }));
       }
     } catch (error) {
       console.error('Failed to load active jobs:', error);
@@ -320,7 +355,7 @@ export function DashboardPage() {
                     {isFarmer ? 'Active Jobs' : 'Completed Deliveries'}
                   </p>
                   <p className="text-2xl font-bold">
-                    {isFarmer ? profile.totalJobs || 0 : profile.totalDeliveries || 0}
+                    {isFarmer ? dashboardStats.activeJobs : profile.totalDeliveries || 0}
                   </p>
                 </div>
                 {isFarmer ? (
@@ -857,6 +892,23 @@ export function DashboardPage() {
                     />
                   </div>
 
+                  {/* Crowdsourcing Toggle */}
+                  <div className="flex items-center justify-between space-x-4 p-4 bg-gray-50 rounded-lg">
+                    <div className="flex-1">
+                      <Label htmlFor="enableCrowdsourcing" className="text-sm font-medium">
+                        Enable Crowdsourcing
+                      </Label>
+                      <p className="text-xs text-gray-600 mt-1">
+                        Allow multiple carriers to share this load by grouping smaller loads from nearby farms
+                      </p>
+                    </div>
+                    <Switch
+                      id="enableCrowdsourcing"
+                      checked={jobForm.enableCrowdsourcing}
+                      onCheckedChange={(checked) => setJobForm({...jobForm, enableCrowdsourcing: checked})}
+                    />
+                  </div>
+
                   <Button type="submit" className="w-full">
                     <Save className="mr-2 h-4 w-4" />
                     Post Job
@@ -908,13 +960,31 @@ export function DashboardPage() {
                           </div>
                         )}
                         <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            className="bg-green-600 hover:bg-green-700"
-                            onClick={() => handleAcceptBid(bid.id, bid)}
-                          >
-                            Accept Bid
-                          </Button>
+                          {bid.status === 'pending' ? (
+                            <Button
+                              size="sm"
+                              className="bg-green-600 hover:bg-green-700"
+                              onClick={() => handleAcceptBid(bid.id, bid)}
+                            >
+                              Accept Bid
+                            </Button>
+                          ) : bid.status === 'accepted' ? (
+                            <Button
+                              size="sm"
+                              className="bg-green-600"
+                              disabled
+                            >
+                              ✓ Accepted
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled
+                            >
+                              Not Selected
+                            </Button>
+                          )}
                           <Button size="sm" variant="outline">
                             <Eye className="mr-1 h-3 w-3" />
                             View Details
