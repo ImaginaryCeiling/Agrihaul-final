@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { FarmerRegistration } from '../components/FarmerRegistration';
 import { CarrierRegistration } from '../components/CarrierRegistration';
 import { Button } from '../components/ui/button';
@@ -10,6 +10,15 @@ type UserType = 'farmer' | 'carrier' | null;
 
 export function RegisterPage() {
   const [selectedType, setSelectedType] = useState<UserType>(null);
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    // Check if type is specified in URL parameters
+    const typeParam = searchParams.get('type');
+    if (typeParam === 'farmer' || typeParam === 'carrier') {
+      setSelectedType(typeParam);
+    }
+  }, [searchParams]);
 
   const handleRegistrationComplete = () => {
     // Registration success handled by individual components

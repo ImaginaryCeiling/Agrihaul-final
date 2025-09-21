@@ -25,6 +25,14 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/dashboard/carrier"
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Redirect any unknown routes to landing */}
           <Route path="*" element={<Navigate to="/" replace />} />

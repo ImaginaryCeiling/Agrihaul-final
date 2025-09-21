@@ -97,7 +97,7 @@ export function CarrierRegistration({ onComplete, onBack }: CarrierRegistrationP
       });
 
       console.log('Carrier registered successfully:', result);
-      navigate('/dashboard');
+      navigate('/dashboard/carrier');
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);

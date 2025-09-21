@@ -119,13 +119,30 @@ export function LoginPage() {
               </Button>
             </form>
 
-            <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600">
-                Don't have an account?{' '}
-                <Link to="/register" className="text-green-600 hover:text-green-700 font-medium">
-                  Sign up here
-                </Link>
-              </p>
+            <div className="mt-6 space-y-4">
+              <div className="text-center">
+                <p className="text-sm text-gray-600">
+                  Don't have an account?{' '}
+                  <Link to="/register" className="text-green-600 hover:text-green-700 font-medium">
+                    Sign up here
+                  </Link>
+                </p>
+              </div>
+
+              {/* Carrier Complete Registration Button */}
+              <div className="border-t pt-4">
+                <Button
+                  variant="outline"
+                  className="w-full border-blue-500 text-blue-600 hover:bg-blue-50"
+                  onClick={() => {
+                    // Redirect to carrier registration with pre-filled role
+                    window.location.href = '/register?type=carrier';
+                  }}
+                >
+                  <Truck className="mr-2 h-4 w-4" />
+                  Complete Registration as Carrier
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
