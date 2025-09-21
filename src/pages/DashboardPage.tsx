@@ -29,7 +29,7 @@ import {
   Save,
   Star
 } from 'lucide-react';
-import { authService, ratingService } from '../services/api';
+import { authService, ratingService, bidService, activeJobService } from '../services/api';
 
 interface User {
   id: string;
@@ -45,6 +45,7 @@ export function DashboardPage() {
   const [showProfileEdit, setShowProfileEdit] = useState(false);
   const [showRatingDialog, setShowRatingDialog] = useState(false);
   const [ratingTarget, setRatingTarget] = useState<{jobId: string, userId: string, userName: string, userType: 'farmer' | 'carrier'} | null>(null);
+  const [activeJobs, setActiveJobs] = useState([]);
   const [jobForm, setJobForm] = useState({
     title: '',
     cropType: '',
@@ -148,6 +149,12 @@ export function DashboardPage() {
     setUser(currentUser as User);
   }, [navigate]);
 
+  useEffect(() => {
+    if (user) {
+      loadActiveJobs();
+    }
+  }, [user]);
+
   const handleLogout = () => {
     authService.logout();
     navigate('/login');
@@ -198,6 +205,37 @@ export function DashboardPage() {
   const openRatingDialog = (jobId: string, userId: string, userName: string, userType: 'farmer' | 'carrier') => {
     setRatingTarget({ jobId, userId, userName, userType });
     setShowRatingDialog(true);
+  };
+
+  const handleAcceptBid = async (bidId: string, bid: any) => {
+    try {
+      await bidService.acceptBid(bidId);
+
+      // Create active job record (in a real app, this would be handled by the backend)
+      console.log('Bid accepted:', bidId);
+      console.log('Creating active job for bid:', bid);
+
+      // Update local state - remove bid from mockBids and add to active jobs
+      // In a real app, you'd refetch data from the server
+      alert('Bid accepted successfully! Job moved to active jobs.');
+
+      // Optionally refresh active jobs
+      loadActiveJobs();
+    } catch (error) {
+      console.error('Failed to accept bid:', error);
+      alert('Failed to accept bid. Please try again.');
+    }
+  };
+
+  const loadActiveJobs = async () => {
+    try {
+      if (user) {
+        const response = await activeJobService.getActiveJobs(user.id);
+        setActiveJobs(response.data || []);
+      }
+    } catch (error) {
+      console.error('Failed to load active jobs:', error);
+    }
   };
 
   if (!user) {
@@ -350,6 +388,7 @@ export function DashboardPage() {
                 <TabsTrigger value="create-job">Create Job</TabsTrigger>
                 <TabsTrigger value="find-carriers">Find Carriers</TabsTrigger>
                 <TabsTrigger value="view-bids">View Bids</TabsTrigger>
+                <TabsTrigger value="active-jobs">Active Jobs</TabsTrigger>
                 <TabsTrigger value="completed-jobs">Completed Jobs</TabsTrigger>
                 <TabsTrigger value="ratings">My Ratings</TabsTrigger>
               </>
@@ -357,6 +396,7 @@ export function DashboardPage() {
               <>
                 <TabsTrigger value="available-jobs">Available Jobs</TabsTrigger>
                 <TabsTrigger value="my-bids">My Bids</TabsTrigger>
+                <TabsTrigger value="active-jobs">Active Jobs</TabsTrigger>
                 <TabsTrigger value="completed-jobs">Completed Jobs</TabsTrigger>
                 <TabsTrigger value="ratings">My Ratings</TabsTrigger>
               </>
@@ -868,7 +908,11 @@ export function DashboardPage() {
                           </div>
                         )}
                         <div className="flex gap-2">
-                          <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                          <Button
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700"
+                            onClick={() => handleAcceptBid(bid.id, bid)}
+                          >
                             Accept Bid
                           </Button>
                           <Button size="sm" variant="outline">
@@ -940,6 +984,94 @@ export function DashboardPage() {
                     </Button>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Active Jobs Tab */}
+          <TabsContent value="active-jobs">
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  {isFarmer ? 'Active Jobs' : 'Active Deliveries'}
+                </CardTitle>
+                <p className="text-sm text-gray-600">
+                  {isFarmer
+                    ? 'Jobs with accepted bids that are currently in progress'
+                    : 'Deliveries you are currently handling'
+                  }
+                </p>
+              </CardHeader>
+              <CardContent>
+                {activeJobs.length > 0 ? (
+                  <div className="space-y-4">
+                    {activeJobs.map((job: any) => (
+                      <div key={job.id} className="border rounded-lg p-4">
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <h4 className="font-medium">{job.title || `${job.cropType} Transport`}</h4>
+                            <p className="text-sm text-gray-600">
+                              {isFarmer ? `Carrier: ${job.carrierName}` : `Farmer: ${job.farmerName}`}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {job.pickupLocation} → {job.deliveryLocation}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-lg font-bold text-green-600">${job.bidAmount || job.payment}</p>
+                            <Badge className="bg-blue-100 text-blue-800">{job.status}</Badge>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-3 border-t">
+                          <div className="text-sm text-gray-500">
+                            Started: {job.startedAt ? new Date(job.startedAt).toLocaleDateString() : 'Pending'}
+                          </div>
+                          <div className="flex gap-2">
+                            {isFarmer ? (
+                              <Button size="sm" variant="outline">
+                                <Eye className="mr-1 h-3 w-3" />
+                                Track Progress
+                              </Button>
+                            ) : (
+                              <>
+                                <Button size="sm" variant="outline">
+                                  <Eye className="mr-1 h-3 w-3" />
+                                  View Details
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  className="bg-green-600 hover:bg-green-700"
+                                  onClick={() => {
+                                    // Update job status to in_progress or completed
+                                    console.log('Update job status for:', job.id);
+                                  }}
+                                >
+                                  {job.status === 'assigned' ? 'Start Delivery' : 'Mark Complete'}
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="text-gray-400 mb-4">
+                      <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      </svg>
+                    </div>
+                    <p className="text-gray-500 mb-4">No active jobs yet</p>
+                    <p className="text-sm text-gray-400">
+                      {isFarmer
+                        ? 'Accept bids to see active jobs here'
+                        : 'Win bids to see your active deliveries here'
+                      }
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

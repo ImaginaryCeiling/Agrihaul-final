@@ -158,6 +158,31 @@ export const bidService = {
       method: 'POST',
       body: JSON.stringify(bidData),
     });
+  },
+
+  async acceptBid(bidId: string) {
+    return await apiRequest(`/api/bids/${bidId}/accept`, {
+      method: 'POST',
+    });
+  },
+
+  async getBids(jobId?: string) {
+    const endpoint = jobId ? `/api/bids?jobId=${jobId}` : '/api/bids';
+    return await apiRequest(endpoint);
+  }
+};
+
+export const activeJobService = {
+  async getActiveJobs(userId?: string) {
+    const endpoint = userId ? `/api/active-jobs?userId=${userId}` : '/api/active-jobs';
+    return await apiRequest(endpoint);
+  },
+
+  async updateJobStatus(jobId: string, status: string) {
+    return await apiRequest(`/api/active-jobs/${jobId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
   }
 };
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from './ui/button';
+import { Button, type ButtonProps } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
@@ -154,7 +154,7 @@ export function CarrierRegistration({ onComplete, onBack }: CarrierRegistrationP
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-6xl">
         <div className="mb-6 flex items-center gap-4">
-          <Button variant="ghost" onClick={onBack} className="flex items-center gap-2">
+          <Button onClick={onBack} className="flex items-center gap-2 hover:bg-accent hover:text-accent-foreground">
             <ArrowLeft className="h-4 w-4" />
             Back
           </Button>

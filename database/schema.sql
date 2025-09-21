@@ -50,6 +50,22 @@ CREATE TABLE IF NOT EXISTS bids (
     UNIQUE(job_id, carrier_id) -- One bid per carrier per job
 );
 
+-- Active Jobs table (tracks accepted bids as active jobs)
+CREATE TABLE IF NOT EXISTS active_jobs (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    job_id UUID NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+    bid_id UUID NOT NULL REFERENCES bids(id) ON DELETE CASCADE,
+    farmer_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    carrier_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    status VARCHAR(20) DEFAULT 'assigned' CHECK (status IN ('assigned', 'in_progress', 'completed', 'cancelled')),
+    accepted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    started_at TIMESTAMP WITH TIME ZONE,
+    completed_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(job_id) -- One active job per original job
+);
+
 -- Indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_user_type ON users(user_type);
@@ -59,6 +75,10 @@ CREATE INDEX IF NOT EXISTS idx_jobs_pickup_date ON jobs(pickup_date);
 CREATE INDEX IF NOT EXISTS idx_bids_job_id ON bids(job_id);
 CREATE INDEX IF NOT EXISTS idx_bids_carrier_id ON bids(carrier_id);
 CREATE INDEX IF NOT EXISTS idx_bids_status ON bids(status);
+CREATE INDEX IF NOT EXISTS idx_active_jobs_farmer_id ON active_jobs(farmer_id);
+CREATE INDEX IF NOT EXISTS idx_active_jobs_carrier_id ON active_jobs(carrier_id);
+CREATE INDEX IF NOT EXISTS idx_active_jobs_status ON active_jobs(status);
+CREATE INDEX IF NOT EXISTS idx_active_jobs_job_id ON active_jobs(job_id);
 
 -- Function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -73,11 +93,13 @@ $$ language 'plpgsql';
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_jobs_updated_at BEFORE UPDATE ON jobs FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_bids_updated_at BEFORE UPDATE ON bids FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_active_jobs_updated_at BEFORE UPDATE ON active_jobs FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Row Level Security (RLS) policies
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE jobs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bids ENABLE ROW LEVEL SECURITY;
+ALTER TABLE active_jobs ENABLE ROW LEVEL SECURITY;
 
 -- Users can read their own data
 CREATE POLICY "Users can view own profile" ON users FOR SELECT USING (auth.uid() = id);
@@ -97,3 +119,12 @@ CREATE POLICY "Job owners and bid creators can view bids" ON bids FOR SELECT USI
 CREATE POLICY "Carriers can create bids" ON bids FOR INSERT WITH CHECK (carrier_id = auth.uid());
 CREATE POLICY "Carriers can update own bids" ON bids FOR UPDATE USING (carrier_id = auth.uid());
 CREATE POLICY "Carriers can delete own bids" ON bids FOR DELETE USING (carrier_id = auth.uid());
+
+-- Active Jobs policies
+CREATE POLICY "Farmers and carriers can view their active jobs" ON active_jobs FOR SELECT USING (
+    farmer_id = auth.uid() OR carrier_id = auth.uid()
+);
+CREATE POLICY "Farmers can create active jobs" ON active_jobs FOR INSERT WITH CHECK (farmer_id = auth.uid());
+CREATE POLICY "Farmers and carriers can update active jobs" ON active_jobs FOR UPDATE USING (
+    farmer_id = auth.uid() OR carrier_id = auth.uid()
+);

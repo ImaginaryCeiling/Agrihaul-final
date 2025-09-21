@@ -92,26 +92,15 @@ export function LandingPage() {
                 AgriHaul makes it easy to manage your logistics, from field to market.
               </p>
               
-              {/* Registration Buttons */}
-              <div className="flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-6 px-4">
+              {/* Get Started Button */}
+              <div className="flex justify-center items-center px-4">
                 <Button
                   asChild
-                  className="w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-white py-4 sm:py-5 px-8 sm:px-10 text-lg sm:text-xl transform hover:-translate-y-1 transition-all duration-300 min-w-[240px]"
+                  className="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white py-5 sm:py-6 px-12 sm:px-16 text-xl sm:text-2xl transform hover:-translate-y-1 transition-all duration-300 min-w-[280px] shadow-lg hover:shadow-xl"
                   size="lg"
                 >
-                  <Link to="/register" className="flex items-center">
-                    <Tractor className="mr-3 h-5 w-5 sm:h-6 sm:w-6" />
-                    Register as Farmer
-                  </Link>
-                </Button>
-                <Button
-                  asChild
-                  className="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white py-4 sm:py-5 px-8 sm:px-10 text-lg sm:text-xl transform hover:-translate-y-1 transition-all duration-300 min-w-[240px]"
-                  size="lg"
-                >
-                  <Link to="/register" className="flex items-center">
-                    <Truck className="mr-3 h-5 w-5 sm:h-6 sm:w-6" />
-                    Register as Carrier
+                  <Link to="/register" className="flex items-center justify-center">
+                    Get Started
                   </Link>
                 </Button>
               </div>
