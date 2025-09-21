@@ -12,6 +12,7 @@ import authRoutes from './routes/auth';
 import jobRoutes from './routes/jobs';
 import userRoutes from './routes/users';
 import bidRoutes from './routes/bids';
+import whatsappRoutes from './routes/whatsapp';
 
 // Load environment variables
 dotenv.config();
@@ -104,6 +105,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/bids', bidRoutes);
+app.use('/api/whatsapp', whatsappRoutes);
 
 // 404 handler
 app.use((req, res) => {
